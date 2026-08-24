@@ -1,7 +1,6 @@
-#include <stdio.h>
+#include "cli.h"
 
-int main(void)
+int main(int argc, char *argv[])
 {
-    printf("cgit version 0.1.0\n");
-    return 0;
+    return cli_run(argc, argv);
 }

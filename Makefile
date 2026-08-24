@@ -1,15 +1,17 @@
 CC = clang
 CFLAGS = -Wall -Wextra -Wpedantic -std=c17
+CPPFLAGS = -Iinclude
 
 TARGET = build/cgit
-SRC = src/main.c
-OBJ = build/main.o
+
+SRC = src/main.c src/cli.c
+OBJ = $(SRC:src/%.c=build/%.o)
 
 $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) $(OBJ) -o $(TARGET)
 
-build/main.o: src/main.c
-	$(CC) $(CFLAGS) -c src/main.c -o build/main.o
+build/%.o: src/%.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f build/*.o $(TARGET)
