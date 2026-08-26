@@ -28,6 +28,28 @@ int cli_error(const char *message)
     return 1;
 }
 
+int cli_init(void)
+{
+    if (repository_exists())
+    {
+        return cli_error("repository already exists");
+    }
+
+    if (repository_create() != 0)
+    {
+        return cli_error("failed to create repository");
+    }
+
+    if (repository_create_head() != 0)
+    {
+        return cli_error("failed to create HEAD");
+    }
+
+    printf("Initialized empty cgit repository\n");
+
+    return 0;
+}
+
 int cli_run(int argc, char *argv[])
 {
     if (argc < 2)
@@ -55,26 +77,4 @@ int cli_run(int argc, char *argv[])
              "unknown command '%s'", argv[1]);
 
     return cli_error(message);
-}
-
-int cli_init(void)
-{
-    if (repository_exists())
-    {
-        return cli_error("repository already exists");
-    }
-
-    if (repository_create() != 0)
-    {
-        return cli_error("failed to create repository");
-    }
-
-    if (repository_create_head() != 0)
-    {
-        return cli_error("failed to create HEAD");
-    }
-
-    printf("Initialized empty cgit repository\n");
-
-    return 0;
 }
