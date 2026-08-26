@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "cli.h"
+#include "repository.h"
 
 int cli_version(void)
 {
@@ -43,6 +44,10 @@ int cli_run(int argc, char *argv[])
     {
         return cli_help();
     }
+    if (strcmp(argv[1], "init") == 0)
+    {
+        return cli_init();
+    }
 
     char message[100];
 
@@ -50,4 +55,26 @@ int cli_run(int argc, char *argv[])
              "unknown command '%s'", argv[1]);
 
     return cli_error(message);
+}
+
+int cli_init(void)
+{
+    if (repository_exists())
+    {
+        return cli_error("repository already exists");
+    }
+
+    if (repository_create() != 0)
+    {
+        return cli_error("failed to create repository");
+    }
+
+    if (repository_create_head() != 0)
+    {
+        return cli_error("failed to create HEAD");
+    }
+
+    printf("Initialized empty cgit repository\n");
+
+    return 0;
 }

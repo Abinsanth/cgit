@@ -4,7 +4,8 @@ CPPFLAGS = -Iinclude
 
 TARGET = build/cgit
 
-SRC = src/main.c src/cli.c
+# SRC = src/main.c src/cli.c
+SRC = src/main.c src/cli.c src/repository.c
 OBJ = $(SRC:src/%.c=build/%.o)
 
 $(TARGET): $(OBJ)
