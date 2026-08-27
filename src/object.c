@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include "hash.h"
 #include "object.h"
+#include <stdlib.h>
 
 int object_create_blob(const unsigned char *data,
                        size_t length,
@@ -69,6 +70,96 @@ int object_store(const char *object_id,
     }
 
     fclose(file);
+
+    return 0;
+}
+
+int object_read(const char *object_id,
+                unsigned char *buffer,
+                size_t buffer_size,
+                size_t *bytes_read)
+{
+    char path[128];
+
+    snprintf(path,
+             sizeof(path),
+             ".cgit/objects/%.2s/%s",
+             object_id,
+             object_id + 2);
+
+    FILE *file = fopen(path, "rb");
+
+    if (file == NULL)
+    {
+        return 1;
+    }
+
+    size_t count = fread(buffer, 1, buffer_size, file);
+
+    if (ferror(file))
+    {
+        fclose(file);
+        return 1;
+    }
+
+    fclose(file);
+
+    *bytes_read = count;
+
+    return 0;
+}
+
+int object_read_file(const char *path,
+                     unsigned char **data,
+                     size_t *length)
+{
+    FILE *file = fopen(path, "rb");
+
+    if (file == NULL)
+    {
+        return 1;
+    }
+
+    if (fseek(file, 0, SEEK_END) != 0)
+    {
+        fclose(file);
+        return 1;
+    }
+
+    long file_size = ftell(file);
+
+    if (file_size < 0)
+    {
+        fclose(file);
+        return 1;
+    }
+
+    rewind(file);
+
+    unsigned char *buffer = malloc((size_t)file_size);
+
+    if (buffer == NULL && file_size > 0)
+    {
+        fclose(file);
+        return 1;
+    }
+
+    size_t bytes_read = fread(
+        buffer,
+        1,
+        (size_t)file_size,
+        file);
+
+    fclose(file);
+
+    if (bytes_read != (size_t)file_size)
+    {
+        free(buffer);
+        return 1;
+    }
+
+    *data = buffer;
+    *length = bytes_read;
 
     return 0;
 }
