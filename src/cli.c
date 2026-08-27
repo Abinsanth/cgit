@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <dirent.h>
 
 #include "cli.h"
 #include "repository.h"
@@ -90,6 +91,10 @@ int cli_run(int argc, char *argv[])
 
         return 0;
     }
+    if (strcmp(argv[1], "status") == 0)
+    {
+        return cli_status();
+    }
 
     char message[100];
 
@@ -140,6 +145,89 @@ int cli_add(const char *path)
     }
 
     free(data);
+
+    return 0;
+}
+
+static int index_contains_path(IndexEntry *entries,
+                               int count,
+                               const char *path)
+{
+    for (int i = 0; i < count; i++)
+    {
+        if (strcmp(entries[i].path, path) == 0)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int cli_status(void)
+{
+    IndexEntry entries[100];
+
+    int count = index_read_entries(entries, 100);
+
+    printf("Changes to be committed:\n");
+
+    for (int i = 0; i < count; i++)
+    {
+        unsigned char *data;
+        size_t length;
+
+        if (object_read_file(entries[i].path, &data, &length) != 0)
+        {
+            printf("  deleted: %s\n", entries[i].path);
+            continue;
+        }
+
+        char current_id[CGIT_OBJECT_ID_SIZE];
+
+        if (object_create_blob(data, length, current_id) != 0)
+        {
+            free(data);
+            return cli_error("failed to calculate file hash");
+        }
+
+        if (strcmp(current_id, entries[i].object_id) == 0)
+        {
+            printf("  staged: %s\n", entries[i].path);
+        }
+        else
+        {
+            printf("  modified: %s\n", entries[i].path);
+        }
+
+        free(data);
+    }
+
+    DIR *directory = opendir(".");
+
+    if (directory == NULL)
+    {
+        return cli_error("failed to open current directory");
+    }
+
+    struct dirent *entry;
+
+    while ((entry = readdir(directory)) != NULL)
+    {
+        if (strcmp(entry->d_name, ".") == 0 ||
+            strcmp(entry->d_name, "..") == 0 ||
+            strcmp(entry->d_name, ".cgit") == 0)
+        {
+            continue;
+        }
+
+        if (!index_contains_path(entries, count, entry->d_name))
+        {
+            printf("  untracked: %s\n", entry->d_name);
+        }
+    }
+
+    closedir(directory);
 
     return 0;
 }
