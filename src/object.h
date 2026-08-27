@@ -3,8 +3,14 @@
 
 #include <stddef.h>
 
+#define CGIT_OBJECT_ID_SIZE 41
+
 int object_create_blob(const unsigned char *data,
                        size_t length,
-                       char object_id[41]);
+                       char object_id[CGIT_OBJECT_ID_SIZE]);
+
+int object_store(const char *object_id,
+                 const unsigned char *data,
+                 size_t length);
 
 #endif
