@@ -6,5 +6,6 @@ int cli_version(void);
 int cli_help(void);
 int cli_error(const char *message);
 int cli_init(void);
+int cli_add(const char *path);
 
 #endif

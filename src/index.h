@@ -11,6 +11,7 @@ typedef struct
     unsigned int mode;
 } IndexEntry;
 
+int index_add_entry(const IndexEntry *entry);
 int index_write_entry(const IndexEntry *entry);
 int index_read_entries(IndexEntry *entries, int max_entries);
 
