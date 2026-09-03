@@ -2,11 +2,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include <dirent.h>
+#include <time.h>
 
 #include "cli.h"
 #include "repository.h"
 #include "object.h"
 #include "index.h"
+#include "commit.h"
+#include "tree.h"
 
 int cli_version(void)
 {
@@ -94,6 +97,15 @@ int cli_run(int argc, char *argv[])
     if (strcmp(argv[1], "status") == 0)
     {
         return cli_status();
+    }
+    if (strcmp(argv[1], "commit") == 0)
+    {
+        if (argc < 4 || strcmp(argv[2], "-m") != 0)
+        {
+            return cli_error("usage: cgit commit -m \"message\"");
+        }
+
+        return cli_commit(argv[3]);
     }
 
     char message[100];
@@ -228,6 +240,90 @@ int cli_status(void)
     }
 
     closedir(directory);
+
+    return 0;
+}
+/*
+ * Create and store a commit from the current index.
+ *
+ * The commit points to a tree generated from the staging area.
+ */
+int cli_commit(const char *message)
+{
+    IndexEntry entries[100];
+
+    int count = index_read_entries(entries, 100);
+
+    if (count <= 0)
+    {
+        return cli_error("nothing to commit");
+    }
+
+    char tree_id[CGIT_OBJECT_ID_SIZE];
+
+    if (tree_create(entries, count, tree_id) != 0)
+    {
+        return cli_error("failed to create tree");
+    }
+
+    char tree_buffer[4096];
+
+    size_t tree_length = 0;
+
+    for (int i = 0; i < count; i++)
+    {
+        int written = snprintf(
+            tree_buffer + tree_length,
+            sizeof(tree_buffer) - tree_length,
+            "%u %s %s\n",
+            entries[i].mode,
+            entries[i].object_id,
+            entries[i].path);
+
+        if (written < 0 ||
+            (size_t)written >= sizeof(tree_buffer) - tree_length)
+        {
+            return cli_error("tree is too large");
+        }
+
+        tree_length += (size_t)written;
+    }
+
+    if (object_store(
+            tree_id,
+            (const unsigned char *)tree_buffer,
+            tree_length) != 0)
+    {
+        return cli_error("failed to store tree");
+    }
+
+    unsigned char commit_buffer[4096];
+    size_t commit_length;
+
+    char commit_id[CGIT_OBJECT_ID_SIZE];
+
+    if (commit_create(
+            tree_id,
+            NULL,
+            "Abin Santh",
+            message,
+            commit_id,
+            commit_buffer,
+            sizeof(commit_buffer),
+            &commit_length) != 0)
+    {
+        return cli_error("failed to create commit");
+    }
+
+    if (object_store(
+            commit_id,
+            commit_buffer,
+            commit_length) != 0)
+    {
+        return cli_error("failed to store commit");
+    }
+
+    printf("[%s] %s\n", commit_id, message);
 
     return 0;
 }

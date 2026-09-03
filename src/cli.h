@@ -8,5 +8,6 @@ int cli_error(const char *message);
 int cli_init(void);
 int cli_add(const char *path);
 int cli_status(void);
+int cli_commit(const char *message);
 
 #endif
