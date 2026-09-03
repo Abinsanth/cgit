@@ -107,6 +107,10 @@ int cli_run(int argc, char *argv[])
 
         return cli_commit(argv[3]);
     }
+    if (strcmp(argv[1], "log") == 0)
+    {
+        return cli_log();
+    }
 
     char message[100];
 
@@ -347,6 +351,99 @@ int cli_commit(const char *message)
     }
 
     printf("[%s] %s\n", commit_id, message);
+
+    return 0;
+}
+/*
+ * Display commit history starting from the current branch.
+ *
+ * Each commit points to its parent, allowing us to walk
+ * backward through the repository history.
+ */
+int cli_log(void)
+{
+    char branch[256];
+
+    if (repository_read_head(branch, sizeof(branch)) != 0)
+    {
+        return cli_error("failed to read HEAD");
+    }
+
+    char commit_id[CGIT_OBJECT_ID_SIZE];
+
+    if (repository_read_branch(
+            branch,
+            commit_id,
+            sizeof(commit_id)) != 0)
+    {
+        return cli_error("no commits yet");
+    }
+
+    while (1)
+    {
+        char object_path[512];
+
+        snprintf(
+            object_path,
+            sizeof(object_path),
+            ".cgit/objects/%c%c/%s",
+            commit_id[0],
+            commit_id[1],
+            commit_id + 2);
+
+        FILE *file = fopen(object_path, "r");
+
+        if (file == NULL)
+        {
+            return cli_error("failed to read commit");
+        }
+
+        char line[4096];
+
+        char parent_id[CGIT_OBJECT_ID_SIZE];
+        int has_parent = 0;
+
+        printf("commit %s\n", commit_id);
+
+        while (fgets(line, sizeof(line), file) != NULL)
+        {
+            if (strncmp(line, "parent ", 7) == 0)
+            {
+                snprintf(
+                    parent_id,
+                    sizeof(parent_id),
+                    "%s",
+                    line + 7);
+
+                parent_id[strcspn(parent_id, "\n")] = '\0';
+
+                has_parent = 1;
+            }
+            else if (strncmp(line, "author ", 7) == 0)
+            {
+                printf("Author: %s", line + 7);
+            }
+            else if (strncmp(line, "message ", 8) == 0)
+            {
+                printf("\n    %s", line + 8);
+            }
+        }
+
+        fclose(file);
+
+        printf("\n");
+
+        if (!has_parent)
+        {
+            break;
+        }
+
+        snprintf(
+            commit_id,
+            sizeof(commit_id),
+            "%s",
+            parent_id);
+    }
 
     return 0;
 }
