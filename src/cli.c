@@ -297,6 +297,24 @@ int cli_commit(const char *message)
         return cli_error("failed to store tree");
     }
 
+    char branch[256];
+
+    if (repository_read_head(branch, sizeof(branch)) != 0)
+    {
+        return cli_error("failed to read HEAD");
+    }
+
+    char parent_id[CGIT_OBJECT_ID_SIZE];
+    const char *parent = NULL;
+
+    if (repository_read_branch(
+            branch,
+            parent_id,
+            sizeof(parent_id)) == 0)
+    {
+        parent = parent_id;
+    }
+
     unsigned char commit_buffer[4096];
     size_t commit_length;
 
@@ -304,7 +322,7 @@ int cli_commit(const char *message)
 
     if (commit_create(
             tree_id,
-            NULL,
+            parent,
             "Abin Santh",
             message,
             commit_id,
@@ -321,6 +339,11 @@ int cli_commit(const char *message)
             commit_length) != 0)
     {
         return cli_error("failed to store commit");
+    }
+
+    if (repository_update_branch(branch, commit_id) != 0)
+    {
+        return cli_error("failed to update branch");
     }
 
     printf("[%s] %s\n", commit_id, message);
