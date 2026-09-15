@@ -14,7 +14,7 @@
 
 int cli_version(void)
 {
-    printf("cgit version 0.1.0\n");
+    printf("cgit version 1.0.0\n");
     return 0;
 }
 
