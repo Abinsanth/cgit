@@ -180,3 +180,17 @@ int object_hash_file(const char *path,
 
     return result;
 }
+int object_read_blob(const char *object_id,
+                     unsigned char **data,
+                     size_t *length)
+{
+    char path[128];
+
+    snprintf(path,
+             sizeof(path),
+             ".cgit/objects/%.2s/%s",
+             object_id,
+             object_id + 2);
+
+    return object_read_file(path, data, length);
+}

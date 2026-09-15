@@ -25,4 +25,7 @@ int object_read_file(const char *path,
 int object_hash_file(const char *path,
                      char object_id[CGIT_OBJECT_ID_SIZE]);
 
+int object_read_blob(const char *object_id,
+                     unsigned char **data,
+                     size_t *length);
 #endif

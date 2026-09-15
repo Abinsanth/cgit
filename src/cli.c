@@ -10,6 +10,7 @@
 #include "index.h"
 #include "commit.h"
 #include "tree.h"
+#include "diff.h"
 
 int cli_version(void)
 {
@@ -110,6 +111,10 @@ int cli_run(int argc, char *argv[])
     if (strcmp(argv[1], "log") == 0)
     {
         return cli_log();
+    }
+    if (strcmp(argv[1], "diff") == 0)
+    {
+        return cli_diff();
     }
 
     char message[100];
@@ -504,6 +509,81 @@ int cli_log(void)
             sizeof(commit_id),
             "%s",
             parent_id);
+    }
+
+    return 0;
+}
+int cli_diff(void)
+{
+    char branch[256];
+    char commit_id[CGIT_OBJECT_ID_SIZE];
+    char tree_id[CGIT_OBJECT_ID_SIZE];
+
+    if (repository_read_head(branch, sizeof(branch)) != 0)
+    {
+        return cli_error("failed to read HEAD");
+    }
+
+    if (repository_read_branch(
+            branch,
+            commit_id,
+            sizeof(commit_id)) != 0)
+    {
+        return cli_error("no commits yet");
+    }
+
+    if (commit_read_tree(
+            commit_id,
+            tree_id,
+            sizeof(tree_id)) != 0)
+    {
+        return cli_error("failed to read HEAD tree");
+    }
+
+    IndexEntry head_entries[100];
+
+    int head_count = tree_read_entries(
+        tree_id,
+        head_entries,
+        100);
+
+    if (head_count < 0)
+    {
+        return cli_error("failed to read HEAD tree entries");
+    }
+    for (int i = 0; i < head_count; i++)
+    {
+        unsigned char *old_data;
+        size_t old_length;
+
+        if (object_read_blob(head_entries[i].object_id,
+                             &old_data,
+                             &old_length) != 0)
+        {
+            return cli_error("failed to read HEAD blob");
+        }
+
+        unsigned char *new_data;
+        size_t new_length;
+
+        if (object_read_file(head_entries[i].path,
+                             &new_data,
+                             &new_length) != 0)
+        {
+            free(old_data);
+            continue;
+        }
+
+        printf("diff -- %s\n", head_entries[i].path);
+
+        diff_text(
+            old_data,
+            old_length,
+            new_data,
+            new_length);
+
+        free(old_data);
+        free(new_data);
     }
 
     return 0;
