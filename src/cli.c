@@ -265,29 +265,19 @@ int cli_status(void)
 
     for (int i = 0; i < count; i++)
     {
-        unsigned char *data;
-        size_t length;
-
-        if (object_read_file(entries[i].path, &data, &length) != 0)
-        {
-            printf("  deleted: %s\n", entries[i].path);
-            continue;
-        }
 
         char current_id[CGIT_OBJECT_ID_SIZE];
 
-        if (object_create_blob(data, length, current_id) != 0)
+        if (object_hash_file(entries[i].path, current_id) != 0)
         {
-            free(data);
-            return cli_error("failed to calculate file hash");
+            printf("  deleted: %s\n", entries[i].path);
+            continue;
         }
 
         if (strcmp(current_id, entries[i].object_id) != 0)
         {
             printf("  modified: %s\n", entries[i].path);
         }
-
-        free(data);
     }
 
     DIR *directory = opendir(".");

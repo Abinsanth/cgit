@@ -163,3 +163,20 @@ int object_read_file(const char *path,
 
     return 0;
 }
+int object_hash_file(const char *path,
+                     char object_id[CGIT_OBJECT_ID_SIZE])
+{
+    unsigned char *data;
+    size_t length;
+
+    if (object_read_file(path, &data, &length) != 0)
+    {
+        return 1;
+    }
+
+    int result = object_create_blob(data, length, object_id);
+
+    free(data);
+
+    return result;
+}
