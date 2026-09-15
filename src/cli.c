@@ -74,10 +74,12 @@ int cli_run(int argc, char *argv[])
     {
         return cli_help();
     }
+
     if (strcmp(argv[1], "init") == 0)
     {
         return cli_init();
     }
+
     if (strcmp(argv[1], "add") == 0)
     {
         if (argc < 3)
@@ -95,10 +97,12 @@ int cli_run(int argc, char *argv[])
 
         return 0;
     }
+
     if (strcmp(argv[1], "status") == 0)
     {
         return cli_status();
     }
+
     if (strcmp(argv[1], "commit") == 0)
     {
         if (argc < 4 || strcmp(argv[2], "-m") != 0)
@@ -108,15 +112,26 @@ int cli_run(int argc, char *argv[])
 
         return cli_commit(argv[3]);
     }
+
     if (strcmp(argv[1], "log") == 0)
     {
         return cli_log();
     }
+
     if (strcmp(argv[1], "diff") == 0)
     {
         return cli_diff();
     }
 
+    if (strcmp(argv[1], "branch") == 0)
+    {
+        if (argc != 3)
+        {
+            return cli_error("usage: cgit branch <name>");
+        }
+
+        return cli_branch(argv[2]);
+    }
     char message[100];
 
     snprintf(message, sizeof(message),
@@ -587,6 +602,38 @@ int cli_diff(void)
         free(old_data);
         free(new_data);
     }
+
+    return 0;
+}
+
+int cli_branch(const char *branch_name)
+{
+    char current_branch[256];
+    char commit_id[CGIT_OBJECT_ID_SIZE];
+
+    if (repository_read_head(
+            current_branch,
+            sizeof(current_branch)) != 0)
+    {
+        return cli_error("failed to read HEAD");
+    }
+
+    if (repository_read_branch(
+            current_branch,
+            commit_id,
+            sizeof(commit_id)) != 0)
+    {
+        return cli_error("no commits yet");
+    }
+
+    if (repository_create_branch(
+            branch_name,
+            commit_id) != 0)
+    {
+        return cli_error("failed to create branch");
+    }
+
+    printf("Created branch '%s'\n", branch_name);
 
     return 0;
 }
