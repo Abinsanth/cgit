@@ -4,6 +4,16 @@
 
 #include "repository.h"
 
+static void repository_branch_path(const char *branch,
+                                   char *path,
+                                   size_t path_size)
+{
+    snprintf(path,
+             path_size,
+             ".cgit/refs/heads/%s",
+             branch);
+}
+
 int repository_exists(void)
 {
     struct stat info;
@@ -106,11 +116,7 @@ int repository_read_branch(const char *branch,
 {
     char path[512];
 
-    snprintf(
-        path,
-        sizeof(path),
-        ".cgit/refs/heads/%s",
-        branch);
+    repository_branch_path(branch, path, sizeof(path));
 
     FILE *file = fopen(path, "r");
 
@@ -136,11 +142,7 @@ int repository_update_branch(const char *branch,
 {
     char path[512];
 
-    snprintf(
-        path,
-        sizeof(path),
-        ".cgit/refs/heads/%s",
-        branch);
+    repository_branch_path(branch, path, sizeof(path));
 
     FILE *file = fopen(path, "w");
 
@@ -191,10 +193,7 @@ int repository_create_branch(const char *branch,
 
     char path[512];
 
-    snprintf(path,
-             sizeof(path),
-             ".cgit/refs/heads/%s",
-             branch);
+    repository_branch_path(branch, path, sizeof(path));
 
     FILE *file = fopen(path, "r");
 

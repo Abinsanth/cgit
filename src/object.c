@@ -1,8 +1,9 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
+
 #include "hash.h"
 #include "object.h"
-#include <stdlib.h>
 
 int object_create_blob(const unsigned char *data,
                        size_t length,

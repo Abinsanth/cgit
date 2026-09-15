@@ -45,12 +45,12 @@ int cli_init(void)
 
     if (repository_create() != 0)
     {
-        return cli_error("failed to create repository");
+        return cli_error("failed to create .cgit directory");
     }
 
     if (repository_create_head() != 0)
     {
-        return cli_error("failed to create HEAD");
+        return cli_error("failed to create HEAD file");
     }
 
     printf("Initialized empty cgit repository\n");
@@ -171,13 +171,13 @@ int cli_add(const char *path)
     if (object_create_blob(data, length, object_id) != 0)
     {
         free(data);
-        return cli_error("failed to create blob");
+        return cli_error("failed to create blob object");
     }
 
     if (object_store(object_id, data, length) != 0)
     {
         free(data);
-        return cli_error("failed to store object");
+        return cli_error("failed to store blob object");
     }
 
     IndexEntry entry;
@@ -364,7 +364,7 @@ int cli_commit(const char *message)
 
     if (tree_create(entries, count, tree_id) != 0)
     {
-        return cli_error("failed to create tree");
+        return cli_error("failed to create tree object");
     }
 
     char tree_buffer[4096];
@@ -395,7 +395,7 @@ int cli_commit(const char *message)
             (const unsigned char *)tree_buffer,
             tree_length) != 0)
     {
-        return cli_error("failed to store tree");
+        return cli_error("failed to store tree object");
     }
 
     char branch[256];
@@ -431,7 +431,7 @@ int cli_commit(const char *message)
             sizeof(commit_buffer),
             &commit_length) != 0)
     {
-        return cli_error("failed to create commit");
+        return cli_error("failed to create commit object");
     }
 
     if (object_store(
@@ -439,12 +439,12 @@ int cli_commit(const char *message)
             commit_buffer,
             commit_length) != 0)
     {
-        return cli_error("failed to store commit");
+        return cli_error("failed to store commit object");
     }
 
     if (repository_update_branch(branch, commit_id) != 0)
     {
-        return cli_error("failed to update branch");
+        return cli_error("failed to update branch reference");
     }
 
     printf("[%s] %s\n", commit_id, message);
@@ -568,7 +568,7 @@ int cli_diff(void)
             tree_id,
             sizeof(tree_id)) != 0)
     {
-        return cli_error("failed to read HEAD tree");
+        return cli_error("failed to read tree object");
     }
 
     IndexEntry head_entries[100];
@@ -580,7 +580,7 @@ int cli_diff(void)
 
     if (head_count < 0)
     {
-        return cli_error("failed to read HEAD tree entries");
+        return cli_error("failed to read tree entries");
     }
     for (int i = 0; i < head_count; i++)
     {
@@ -591,7 +591,7 @@ int cli_diff(void)
                              &old_data,
                              &old_length) != 0)
         {
-            return cli_error("failed to read HEAD blob");
+            return cli_error("failed to read blob object");
         }
 
         unsigned char *new_data;
@@ -669,7 +669,7 @@ int cli_branch_list(void)
 
     if (directory == NULL)
     {
-        return cli_error("failed to open branch references");
+        return cli_error("failed to open branch references directory");
     }
 
     struct dirent *entry;
@@ -711,7 +711,7 @@ int cli_checkout(const char *branch_name)
 
     if (repository_update_head(branch_name) != 0)
     {
-        return cli_error("failed to update HEAD");
+        return cli_error("failed to update HEAD reference");
     }
 
     printf("Switched to branch '%s'\n", branch_name);
