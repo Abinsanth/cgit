@@ -68,3 +68,15 @@ asan: $(ASAN_TARGET)
 
 clean:
 	rm -f build/*.o $(TARGET) $(TEST_TARGET) $(ASAN_TARGET)
+
+
+# Installation
+
+INSTALL_DIR = $(HOME)/.local/bin
+
+install: $(TARGET)
+	mkdir -p $(INSTALL_DIR)
+	cp $(TARGET) $(INSTALL_DIR)/cgit
+
+uninstall:
+	rm -f $(INSTALL_DIR)/cgit
