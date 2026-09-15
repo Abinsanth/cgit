@@ -155,3 +155,38 @@ int repository_update_branch(const char *branch,
 
     return 0;
 }
+int repository_create_branch(const char *branch,
+                             const char *commit_id)
+{
+    char path[512];
+
+    snprintf(path,
+             sizeof(path),
+             ".cgit/refs/heads/%s",
+             branch);
+
+    FILE *file = fopen(path, "r");
+
+    if (file != NULL)
+    {
+        fclose(file);
+        return 1;
+    }
+
+    file = fopen(path, "w");
+
+    if (file == NULL)
+    {
+        return 1;
+    }
+
+    if (fprintf(file, "%s\n", commit_id) < 0)
+    {
+        fclose(file);
+        return 1;
+    }
+
+    fclose(file);
+
+    return 0;
+}
