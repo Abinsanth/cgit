@@ -18,3 +18,17 @@ build/%.o: src/%.c
 
 clean:
 	rm -f build/*.o $(TARGET)
+
+
+TEST_TARGET = build/cgit_tests
+TEST_SRC = tests/test_main.c
+TEST_OBJ = $(TEST_SRC:tests/%.c=build/test_%.o)
+
+$(TEST_TARGET): $(TEST_OBJ) $(filter-out build/main.o,$(OBJ))
+	$(CC) $(CFLAGS) $(TEST_OBJ) $(filter-out build/main.o,$(OBJ)) -o $(TEST_TARGET)
+
+build/test_%.o: tests/%.c
+	$(CC) $(CPPFLAGS) $(CFLAGS) -Itests -c $< -o $@
+
+test: $(TEST_TARGET)
+	./$(TEST_TARGET)
