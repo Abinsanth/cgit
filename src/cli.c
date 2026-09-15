@@ -575,6 +575,8 @@ int cli_diff(void)
         }
 
         printf("diff -- %s\n", head_entries[i].path);
+        printf("--- HEAD\n");
+        printf("+++ working tree\n");
 
         diff_text(
             old_data,
