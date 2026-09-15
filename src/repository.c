@@ -155,9 +155,40 @@ int repository_update_branch(const char *branch,
 
     return 0;
 }
+
+static int repository_valid_branch_name(const char *branch)
+{
+    if (branch == NULL || branch[0] == '\0')
+    {
+        return 0;
+    }
+
+    if (strcmp(branch, ".") == 0 ||
+        strcmp(branch, "..") == 0)
+    {
+        return 0;
+    }
+
+    for (size_t i = 0; branch[i] != '\0'; i++)
+    {
+        if (branch[i] == '/' ||
+            branch[i] == ' ')
+        {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 int repository_create_branch(const char *branch,
                              const char *commit_id)
 {
+    if (!repository_valid_branch_name(branch))
+    {
+        return 1;
+    }
+
     char path[512];
 
     snprintf(path,
