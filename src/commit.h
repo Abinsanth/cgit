@@ -14,4 +14,8 @@ int commit_create(const char *tree_id,
                   size_t buffer_size,
                   size_t *length);
 
+int commit_read_tree(const char *commit_id,
+                     char *tree_id,
+                     size_t tree_id_size);
+
 #endif

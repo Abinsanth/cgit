@@ -180,11 +180,86 @@ static int index_contains_path(IndexEntry *entries,
     return 0;
 }
 
+static int find_index_entry(IndexEntry *entries,
+                            int count,
+                            const char *path,
+                            IndexEntry *result)
+{
+    for (int i = 0; i < count; i++)
+    {
+        if (strcmp(entries[i].path, path) == 0)
+        {
+            *result = entries[i];
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 int cli_status(void)
 {
     IndexEntry entries[100];
 
     int count = index_read_entries(entries, 100);
+    char branch[256];
+    char head_commit_id[CGIT_OBJECT_ID_SIZE];
+    char head_tree_id[CGIT_OBJECT_ID_SIZE];
+
+    IndexEntry head_entries[100];
+
+    int head_count = 0;
+
+    if (repository_read_head(branch, sizeof(branch)) == 0 &&
+        repository_read_branch(
+            branch,
+            head_commit_id,
+            sizeof(head_commit_id)) == 0 &&
+        commit_read_tree(
+            head_commit_id,
+            head_tree_id,
+            sizeof(head_tree_id)) == 0)
+    {
+        head_count = tree_read_entries(
+            head_tree_id,
+            head_entries,
+            100);
+    }
+    for (int i = 0; i < count; i++)
+    {
+        IndexEntry head_entry;
+
+        if (!find_index_entry(
+                head_entries,
+                head_count,
+                entries[i].path,
+                &head_entry))
+        {
+            printf("  staged: %s\n", entries[i].path);
+            continue;
+        }
+
+        if (strcmp(
+                entries[i].object_id,
+                head_entry.object_id) != 0)
+        {
+            printf("  staged: %s\n", entries[i].path);
+        }
+    }
+
+    for (int i = 0; i < head_count; i++)
+    {
+        IndexEntry index_entry;
+
+        if (!find_index_entry(
+                entries,
+                count,
+                head_entries[i].path,
+                &index_entry))
+        {
+            printf("  staged: %s\n", head_entries[i].path);
+        }
+    }
 
     printf("Changes to be committed:\n");
 
@@ -207,11 +282,7 @@ int cli_status(void)
             return cli_error("failed to calculate file hash");
         }
 
-        if (strcmp(current_id, entries[i].object_id) == 0)
-        {
-            printf("  staged: %s\n", entries[i].path);
-        }
-        else
+        if (strcmp(current_id, entries[i].object_id) != 0)
         {
             printf("  modified: %s\n", entries[i].path);
         }

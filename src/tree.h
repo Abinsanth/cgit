@@ -7,4 +7,8 @@ int tree_create(const IndexEntry *entries,
                 int count,
                 char tree_id[CGIT_OBJECT_ID_SIZE]);
 
+int tree_read_entries(const char *tree_id,
+                      IndexEntry *entries,
+                      int max_entries);
+
 #endif

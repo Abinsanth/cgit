@@ -42,3 +42,53 @@ int tree_create(const IndexEntry *entries,
         offset,
         tree_id);
 }
+/*
+ * Read entries from a stored tree object.
+ *
+ * The tree object uses the same text format as the index,
+ * so each tree entry can be parsed into an IndexEntry.
+ */
+int tree_read_entries(const char *tree_id,
+                      IndexEntry *entries,
+                      int max_entries)
+{
+    char path[512];
+
+    snprintf(
+        path,
+        sizeof(path),
+        ".cgit/objects/%c%c/%s",
+        tree_id[0],
+        tree_id[1],
+        tree_id + 2);
+
+    FILE *file = fopen(path, "r");
+
+    if (file == NULL)
+    {
+        return -1;
+    }
+
+    int count = 0;
+
+    while (count < max_entries)
+    {
+        int result = fscanf(
+            file,
+            "%u %40s %255[^\n]\n",
+            &entries[count].mode,
+            entries[count].object_id,
+            entries[count].path);
+
+        if (result != 3)
+        {
+            break;
+        }
+
+        count++;
+    }
+
+    fclose(file);
+
+    return count;
+}

@@ -6,6 +6,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 
 #include "commit.h"
@@ -69,4 +70,55 @@ int commit_create(const char *tree_id,
         buffer,
         *length,
         commit_id);
+}
+/*
+ * Read the tree ID referenced by a commit.
+ */
+int commit_read_tree(const char *commit_id,
+                     char *tree_id,
+                     size_t tree_id_size)
+{
+    char path[512];
+
+    snprintf(
+        path,
+        sizeof(path),
+        ".cgit/objects/%c%c/%s",
+        commit_id[0],
+        commit_id[1],
+        commit_id + 2);
+
+    FILE *file = fopen(path, "r");
+
+    if (file == NULL)
+    {
+        return 1;
+    }
+
+    char line[4096];
+
+    while (fgets(line, sizeof(line), file) != NULL)
+    {
+        if (strncmp(line, "tree ", 5) == 0)
+        {
+            char *value = line + 5;
+
+            value[strcspn(value, "\n")] = '\0';
+
+            if (strlen(value) + 1 > tree_id_size)
+            {
+                fclose(file);
+                return 1;
+            }
+
+            snprintf(tree_id, tree_id_size, "%s", value);
+
+            fclose(file);
+            return 0;
+        }
+    }
+
+    fclose(file);
+
+    return 1;
 }
