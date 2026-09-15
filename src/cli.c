@@ -125,13 +125,19 @@ int cli_run(int argc, char *argv[])
 
     if (strcmp(argv[1], "branch") == 0)
     {
-        if (argc != 3)
+        if (argc == 2)
         {
-            return cli_error("usage: cgit branch <name>");
+            return cli_branch_list();
         }
 
-        return cli_branch(argv[2]);
+        if (argc == 3)
+        {
+            return cli_branch(argv[2]);
+        }
+
+        return cli_error("usage: cgit branch [<name>]");
     }
+
     char message[100];
 
     snprintf(message, sizeof(message),
@@ -634,6 +640,49 @@ int cli_branch(const char *branch_name)
     }
 
     printf("Created branch '%s'\n", branch_name);
+
+    return 0;
+}
+
+int cli_branch_list(void)
+{
+    char current_branch[256];
+
+    if (repository_read_head(
+            current_branch,
+            sizeof(current_branch)) != 0)
+    {
+        return cli_error("failed to read HEAD");
+    }
+
+    DIR *directory = opendir(".cgit/refs/heads");
+
+    if (directory == NULL)
+    {
+        return cli_error("failed to open branch references");
+    }
+
+    struct dirent *entry;
+
+    while ((entry = readdir(directory)) != NULL)
+    {
+        if (strcmp(entry->d_name, ".") == 0 ||
+            strcmp(entry->d_name, "..") == 0)
+        {
+            continue;
+        }
+
+        if (strcmp(entry->d_name, current_branch) == 0)
+        {
+            printf("* %s\n", entry->d_name);
+        }
+        else
+        {
+            printf("  %s\n", entry->d_name);
+        }
+    }
+
+    closedir(directory);
 
     return 0;
 }

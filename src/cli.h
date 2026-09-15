@@ -12,5 +12,6 @@ int cli_commit(const char *message);
 int cli_log(void);
 int cli_diff(void);
 int cli_branch(const char *branch_name);
+int cli_branch_list(void);
 
 #endif
