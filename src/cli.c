@@ -138,6 +138,16 @@ int cli_run(int argc, char *argv[])
         return cli_error("usage: cgit branch [<name>]");
     }
 
+    if (strcmp(argv[1], "checkout") == 0)
+    {
+        if (argc != 3)
+        {
+            return cli_error("usage: cgit checkout <branch>");
+        }
+
+        return cli_checkout(argv[2]);
+    }
+
     char message[100];
 
     snprintf(message, sizeof(message),
@@ -683,6 +693,28 @@ int cli_branch_list(void)
     }
 
     closedir(directory);
+
+    return 0;
+}
+
+int cli_checkout(const char *branch_name)
+{
+    char commit_id[CGIT_OBJECT_ID_SIZE];
+
+    if (repository_read_branch(
+            branch_name,
+            commit_id,
+            sizeof(commit_id)) != 0)
+    {
+        return cli_error("branch not found");
+    }
+
+    if (repository_update_head(branch_name) != 0)
+    {
+        return cli_error("failed to update HEAD");
+    }
+
+    printf("Switched to branch '%s'\n", branch_name);
 
     return 0;
 }

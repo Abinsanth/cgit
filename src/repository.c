@@ -190,3 +190,25 @@ int repository_create_branch(const char *branch,
 
     return 0;
 }
+
+int repository_update_head(const char *branch)
+{
+    FILE *file = fopen(".cgit/HEAD", "w");
+
+    if (file == NULL)
+    {
+        return 1;
+    }
+
+    if (fprintf(file,
+                "ref: refs/heads/%s\n",
+                branch) < 0)
+    {
+        fclose(file);
+        return 1;
+    }
+
+    fclose(file);
+
+    return 0;
+}

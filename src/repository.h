@@ -18,4 +18,6 @@ int repository_update_branch(const char *branch,
 
 int repository_create_branch(const char *branch,
                              const char *commit_id);
+
+int repository_update_head(const char *branch);
 #endif
